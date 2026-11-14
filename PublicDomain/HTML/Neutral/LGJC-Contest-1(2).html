@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mascot Design Contest - Linux Community on Game Jolt</title>
+    <style>
+        :root {
+            --bg-color: #1a1a24;
+            --card-bg: #252634;
+            --accent-color: #2bb673;
+            --text-color: #e0e0e0;
+            --text-muted: #a0a0b0;
+            --warning-color: #ff9800;
+            --danger-color: #ff5252;
+            --border-color: #383a4e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ================= POPUP OVERLAY (FACILE À RETIRER) ================= */
+        /* Pour retirer le popup plus tard, supprimez simplement ce bloc CSS et la <div id="pause-popup"> dans le HTML */
+        #pause-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 15, 22, 0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        #pause-popup-box {
+            background-color: var(--card-bg);
+            border: 2px solid var(--warning-color);
+            border-radius: 12px;
+            max-width: 550px;
+            width: 100%;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            position: relative;
+        }
+
+        #pause-popup-box h2 {
+            color: var(--warning-color);
+            border-bottom: none;
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+
+        .popup-divider {
+            border: 0;
+            height: 1px;
+            background: var(--border-color);
+            margin: 1.2rem 0;
+        }
+
+        .popup-close-btn {
+            background-color: var(--warning-color);
+            color: #15151e;
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: opacity 0.2s ease;
+        }
+
+        .popup-close-btn:hover {
+            opacity: 0.9;
+        }
+        /* ================= FIN DU POPUP OVERLAY ================= */
+
+        header {
+            background: linear-gradient(135deg, #2b1b4d, #1a1a24);
+            border-bottom: 2px solid var(--accent-color);
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            font-size: 2.2rem;
+        }
+
+        .subtitle {
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .lang-switch-container {
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .lang-btn {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 1.2rem;
+            margin: 0 0.3rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover, .lang-btn.active {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+
+        container {
+            display: block;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem 1.5rem;
+        }
+
+        section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        ul {
+            padding-left: 1.2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-box {
+            background-color: rgba(43, 182, 115, 0.1);
+            border-left: 4px solid var(--accent-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .reward-box {
+            background-color: rgba(43, 182, 115, 0.15);
+            border: 1px solid var(--accent-color);
+            padding: 1.2rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+        }
+
+        .disclaimer-box {
+            background-color: rgba(255, 152, 0, 0.1);
+            border-left: 4px solid var(--warning-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.95rem;
+        }
+
+        .restriction-box {
+            background-color: rgba(255, 82, 82, 0.1);
+            border-left: 4px solid var(--danger-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .lang-section {
+            display: none;
+        }
+
+        .lang-section.active-content {
+            display: block;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        code {
+            background-color: #15151e;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: #e6db74;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= DÉBUT DU POPUP PAUSE (SUPPRIMER CE BLOC POUR L'ENLEVER) ================= -->
+    <div id="pause-popup-overlay">
+        <div id="pause-popup-box">
+            <h2>⏸️ Contest Paused Indefinitely</h2>
+            <p>
+                This mascot creation contest is currently <strong>paused for an unlimited time</strong>. Submissions are temporarily closed until further notice.
+            </p>
+            <hr class="popup-divider">
+            <h2>⏸️ Concours en Pause (Durée Indéterminée)</h2>
+            <p>
+                Ce concours de création de mascotte est actuellement <strong>en pause pour un temps illimité</strong>. Les participations sont temporairement fermées jusqu'à nouvel ordre.
+            </p>
+            <button class="popup-close-btn" onclick="document.getElementById('pause-popup-overlay').style.display='none'">
+                Close / Fermer (View Rules / Voir les règles)
+            </button>
+        </div>
+    </div>
+    <!-- ================= FIN DU POPUP PAUSE ================= -->
+
+    <header>
+        <h1>Mascot Creation Contest</h1>
+        <div class="subtitle">Game Jolt Linux Community</div>
+    </header>
+
+    <div class="lang-switch-container">
+        <button class="lang-btn active" onclick="switchLanguage('en', event)">English Version</button>
+        <button class="lang-btn" onclick="switchLanguage('fr', event)">Version Française</button>
+    </div>
+
+    <container>
+        <!-- ================= ENGLISH VERSION ================= -->
+        <div id="lang-en" class="lang-section active-content">
+            
+            <section>
+                <h2>🏆 Winner Reward & Recognition</h2>
+                <div class="reward-box">
+                    <p>
+                        The winner's artwork will become the <strong>official mascot of the Linux Community on Game Jolt</strong>!
+                    </p>
+                    <ul>
+                        <li>Your name/username will be <strong>permanently added to the official Game Jolt community description</strong> as the official mascot creator.</li>
+                        <li>A <strong>direct download link</strong> for the mascot (and credit to your profile) will be featured in the community description.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>1. Mascot Design & Creative Freedom</h2>
+                <ul>
+                    <li><strong>Animal / Creature:</strong> Complete creative freedom! You can choose <strong>any animal or creature</strong> you want, as long as it is <strong>NOT a penguin</strong> (to avoid copying or resembling <em>Tux</em>, the Linux mascot).</li>
+                    <li><strong>Color Palette:</strong> For copyright and trademark reasons, do <strong>NOT</strong> use the official Game Jolt website colors (the signature neon green and black theme).</li>
+                    <li><strong>Expression/Vibe:</strong> Happy, friendly, and welcoming attitude.</li>
+                    <li><strong>Art Style:</strong> Any traditional or digital art style is accepted (vector, 3D, hand-drawn, digital painting, etc.).</li>
+                    <li><strong>Pixel Art Rule:</strong> Pixel Art is accepted <strong>ONLY IF</strong> you also provide a high-resolution, non-pixel art version of the mascot (so it can be cleanly used on banners and logos).</li>
+                    <li><strong>No Generative AI:</strong> The use of Generative AI tools (AI art generators) is <strong>STRICTLY FORBIDDEN</strong>. Submissions must be created 100% by human artists.</li>
+                    <li><strong>File Formats:</strong> Accepted formats are <code>.png</code> (transparent background preferred) and/or <code>.svg</code>.</li>
+                </ul>
+
+                <div class="restriction-box">
+                    <strong>Important Restrictions:</strong>
+                    <ul>
+                        <li>No penguins (must not be the same animal as Tux).</li>
+                        <li>No Game Jolt official brand colors.</li>
+                        <li>No standalone Pixel Art (must include a non-pixel art version).</li>
+                        <li>No Generative AI (AI-generated art is strictly banned).</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>2. Mandatory Creative Commons Licenses</h2>
+                <p>To allow the community to freely use and share its mascot without legal barriers, submissions <strong>must</strong> be released under one of the following open licenses:</p>
+                <ul>
+                    <li><strong>CC BY 4.0 (Attribution 4.0 International):</strong> <em>(Recommended)</em> Allows everyone to share and adapt the work for any purpose, provided appropriate credit is given to you as the creator.</li>
+                    <li><strong>CC0 1.0 (Public Domain Dedication):</strong> Waives all copyright rights globally.</li>
+                    <li><strong>Both CC0 and CC BY 4.0 combined.</strong></li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>3. Naming Rules & Restrictions</h2>
+                <div class="highlight-box">
+                    <p><strong>Name Guidelines:</strong></p>
+                    <ul>
+                        <li>Do <strong>NOT</strong> name the mascot anything similar to <em>Tux</em>.</li>
+                        <li>Do <strong>NOT</strong> include the word <em>Linux</em> in the name.</li>
+                        <li>For legal reasons, do <strong>NOT</strong> use the word <em>Jolt</em> or similar variations in the mascot's name.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="disclaimer-box">
+                <h2>Legal Disclaimer</h2>
+                <p>
+                    This mascot design contest is an independent initiative organized strictly by and for the Linux Community on Game Jolt. 
+                    <strong>This contest is NOT affiliated with, sponsored by, endorsed by, or associated with Game Jolt Inc. or the Linux Foundation.</strong>
+                </p>
+            </section>
+        </div>
+
+        <!-- ================= VERSION FRANÇAISE ================= -->
+        <div id="lang-fr" class="lang-section">
+            
+            <section>
+                <h2>🏆 Récompense & Reconnaissance du Gagnant</h2>
+                <div class="reward-box">
+                    <p>
+                        L'œuvre gagnante deviendra la <strong>mascotte officielle de la communauté Linux sur Game Jolt</strong> !
+                    </p>
+                    <ul>
+                        <li>Votre nom/pseudo sera <strong>ajouté de façon permanente dans la description officielle du groupe communautaire Linux de Game Jolt</strong> en tant que créateur de la mascotte.</li>
+                        <li>Un <strong>lien direct pour télécharger la mascotte</strong> (ainsi que votre crédit) sera intégré dans la description de la communauté.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>1. Consignes & Liberté Créative</h2>
+                <ul>
+                    <li><strong>Animal / Créature :</strong> Carte blanche totale ! Vous pouvez choisir <strong>n'importe quel animal ou créature</strong>, à condition que ce ne soit <strong>PAS un manchot ou un pingouin</strong> (pour ne pas reprendre le même animal que <em>Tux</em>).</li>
+                    <li><strong>Couleurs :</strong> Pour des raisons de droit d'auteur (copyright), n'utilisez <strong>PAS</strong> les couleurs officielles du site Game Jolt (le vert néon et noir caractéristiques de la plateforme).</li>
+                    <li><strong>Expression / Ambiance :</strong> Une attitude joyeuse, amicale et accueillante.</li>
+                    <li><strong>Style artistique :</strong> Tous les styles traditionnels ou numériques sont acceptés (vectoriel, 3D, dessin fait main, peinture numérique, etc.).</li>
+                    <li><strong>Règle sur le Pixel Art :</strong> Le Pixel Art est accepté <strong>UNIQUEMENT SI</strong> une version haute résolution (non-pixel art) de la mascotte est également fournie avec votre participation.</li>
+                    <li><strong>Pas d'IA générative :</strong> L'utilisation d'outils d'intelligence artificielle générative (générateurs d'images par IA) est <strong>STRICTEMENT INTERDITE</strong>. Les participations doivent être créées à 100 % par des artistes humains.</li>
+                    <li><strong>Formats de fichier autorisés :</strong> Les formats acceptés sont le <code>.png</code> (fond transparent apprécié) et/ou le <code>.svg</code>.</li>
+                </ul>
+
+                <div class="restriction-box">
+                    <strong>Restrictions Importantes :</strong>
+                    <ul>
+                        <li>Pas de manchot / pingouin (ne doit pas être l'animal de Tux).</li>
+                        <li>Pas de couleurs officielles du site Game Jolt.</li>
+                        <li>Pas de Pixel Art seul (une version non-pixel art doit être incluse).</li>
+                        <li>Pas d'IA générative (images générées par IA strictement interdites).</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section>
+                <h2>2. Licences Creative Commons Obligatoires</h2>
+                <p>Pour permettre à la communauté d'utiliser et partager librement sa mascotte sans blocage légal, les participations doivent <strong>obligatoirement</strong> être soumises sous l'une des licences libres suivantes :</p>
+                <ul>
+                    <li><strong>CC BY 4.0 (Attribution 4.0 International) :</strong> <em>(Recommandée)</em> Permet à tout le monde de partager et d'adapter l'œuvre, y compris à des fins commerciales, à condition de vous créditer en tant qu'auteur original.</li>
+                    <li><strong>CC0 1.0 (Domaine Public) :</strong> Renonce à tous les droits d'auteur dans le monde entier.</li>
+                    <li><strong>Une combinaison des deux (CC0 et CC BY 4.0).</strong></li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>3. Règles de Nommage et Restrictions</h2>
+                <div class="highlight-box">
+                    <p><strong>Directives pour le nom :</strong></p>
+                    <ul>
+                        <li>Ne <strong>PAS</strong> donner un nom similaire à <em>Tux</em>.</li>
+                        <li>Ne <strong>PAS</strong> inclure le mot <em>Linux</em> dans le nom.</li>
+                        <li>Pour des raisons légales, ne <strong>PAS</strong> utiliser le mot <em>Jolt</em> (ni de dérivé similaire) dans le nom de la mascotte.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="disclaimer-box">
+                <h2>Avertissement Légal</h2>
+                <p>
+                    Ce concours de création de mascotte est une initiative indépendante organisée strictement par et pour la communauté Linux de Game Jolt. 
+                    <strong>Ce concours n'est PAS affilié, sponsorisé, approuvé ou associé à Game Jolt Inc. ni à la Linux Foundation.</strong>
+                </p>
+            </section>
+        </div>
+    </container>
+
+    <footer>
+        <p>This web page is open source under the <strong>MIT-0 License</strong> (No Attribution Required).</p>
+        <p>Community Linux @ Game Jolt</p>
+    </footer>
+
+    <script>
+        function switchLanguage(lang, e) {
+            // Hide all language sections
+            const sections = document.querySelectorAll('.lang-section');
+            sections.forEach(sec => sec.classList.remove('active-content'));
+
+            // Deactivate all buttons
+            const buttons = document.querySelectorAll('.lang-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            // Show selected language section
+            const targetSection = document.getElementById('lang-' + lang);
+            if (targetSection) {
+                targetSection.classList.add('active-content');
+            }
+
+            // Activate current button
+            if (e && e.currentTarget) {
+                e.currentTarget.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
