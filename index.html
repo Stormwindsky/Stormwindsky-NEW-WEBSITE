@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        #intro-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Overlay to capture the first click */
+        #click-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            transition: opacity 0.3s ease;
+        }
+
+        #click-message {
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px 40px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            border: 2px solid #fff;
+        }
+
+        /* Skip Button */
+        #skip-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            z-index: 20;
+            padding: 10px 24px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none; /* Hidden until video starts playing */
+            transition: background-color 0.2s ease;
+        }
+
+        #skip-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Click overlay to satisfy browser autoplay policies -->
+    <div id="click-overlay">
+        <div id="click-message">Click anywhere to start</div>
+    </div>
+
+    <!-- Video Element with your GitHub video URL -->
+    <video id="intro-video" playsinline>
+        <source src="https://raw.githubusercontent.com/Stormwindsky/Stormwindsky-NEW-WEBSITE/refs/heads/main/PublicDomain/ASSETS/2026/My%20Intro%202026.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <!-- Skip Button -->
+    <button id="skip-btn">Skip</button>
+
+    <script>
+        const video = document.getElementById('intro-video');
+        const overlay = document.getElementById('click-overlay');
+        const skipBtn = document.getElementById('skip-btn');
+
+        // Set default volume to 50% (0.5)
+        video.volume = 0.5;
+
+        let hasStarted = false;
+
+        // Function to transition to main.html
+        function redirectToMain() {
+            window.location.href = 'main.html';
+        }
+
+        // Listen for the first mouse click anywhere on the page
+        document.addEventListener('click', () => {
+            if (!hasStarted) {
+                hasStarted = true;
+                
+                // Hide overlay
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 300);
+
+                // Show skip button
+                skipBtn.style.display = 'block';
+
+                // Play the video
+                video.play().catch(error => {
+                    console.log("Autoplay prevented or failed: ", error);
+                });
+            }
+        });
+
+        // Prevent pausing the video
+        video.addEventListener('pause', () => {
+            if (hasStarted && !video.ended) {
+                video.play();
+            }
+        });
+
+        // Redirect automatically when video ends
+        video.addEventListener('ended', redirectToMain);
+
+        // Handle Skip button click
+        skipBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent triggering the body click event twice
+            redirectToMain();
+        });
+    </script>
+</body>
+</html>
