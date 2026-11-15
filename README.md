@@ -1,2 +1,2 @@
-# Stormwindsky-NEW-WEBSITE
+# Stormwindsky NEW WEBSITE
 coming soon :)
