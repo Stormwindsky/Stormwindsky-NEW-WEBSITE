@@ -1,1 +1,1 @@
-THIS IS ALL TEXT THE IS NOT MADE BY ME... but i edited :)
+THIS IS ALL TEXT THAT IS NOT MADE BY ME... but i edited :)
