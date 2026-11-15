@@ -1,1 +1,1 @@
-THIS IS ALL ASSETS THE IS NOT MADE BY ME... but i edited :)
+THIS IS ALL HTML THE IS NOT MADE BY ME... but i edited :)
