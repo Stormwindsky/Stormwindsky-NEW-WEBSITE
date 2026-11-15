@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StormExplorer | Digital Collection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg-body: #f4f6f9;
+            --bg-gradient: radial-gradient(circle at 12% 12%, rgba(0, 122, 255, 0.08), transparent 42%),
+                           radial-gradient(circle at 88% 88%, rgba(56, 152, 255, 0.08), transparent 42%);
+            --card-bg: #ffffff;
+            --card-border: rgba(0, 0, 0, 0.06);
+            --pill-bg: rgba(255, 255, 255, 0.82);
+            --input-bg: #f1f3f7;
+            --blue-main: #007aff;
+            --blue-hover: #0066d6;
+            --sky-badge: #0ea5e9;
+            --green-btn: #10b981;
+            --green-hover: #059669;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --radius: 24px;
+            --shadow-sm: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+            --shadow-hover: 0 20px 35px -10px rgba(0, 122, 255, 0.14);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #090a0f;
+            --bg-gradient: radial-gradient(circle at 12% 12%, rgba(0, 122, 255, 0.14), transparent 45%),
+                           radial-gradient(circle at 88% 88%, rgba(14, 165, 233, 0.1), transparent 45%);
+            --card-bg: #14171f;
+            --card-border: rgba(255, 255, 255, 0.08);
+            --pill-bg: rgba(20, 23, 31, 0.8);
+            --input-bg: #1e222d;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --shadow-sm: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+            --shadow-hover: 0 20px 35px -10px rgba(0, 122, 255, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-body);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            padding: 28px 20px 48px;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+        }
+
+        /* Glass Header */
+        header {
+            background: var(--pill-bg);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 16px 26px;
+            border-radius: var(--radius);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #007aff, #38bdf8);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 6px 15px rgba(0, 122, 255, 0.25);
+        }
+
+        .brand h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn, .theme-btn {
+            padding: 9px 15px;
+            border-radius: 999px;
+            border: 1px solid var(--card-border);
+            background: var(--card-bg);
+            color: var(--text-main);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover, .theme-btn:hover {
+            border-color: var(--blue-main);
+            transform: translateY(-1px);
+        }
+
+        .filter-btn.inactive {
+            opacity: 0.65;
+        }
+
+        .filter-btn.active {
+            background: var(--sky-badge);
+            color: #ffffff;
+            border-color: var(--sky-badge);
+            opacity: 1;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+        }
+
+        /* Hero Search Section */
+        .search-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 36px 28px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .search-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 18px;
+            font-weight: 500;
+        }
+
+        .search-bar {
+            display: flex;
+            background: var(--input-bg);
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 8px 20px;
+            border-radius: 999px;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid transparent;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .search-bar:focus-within {
+            border-color: var(--blue-main);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
+        }
+
+        .search-bar i {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .search-bar input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            padding: 8px 0;
+            font-family: inherit;
+            font-size: 1rem;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        /* Category Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab:hover {
+            color: var(--text-main);
+            border-color: rgba(0, 122, 255, 0.35);
+        }
+
+        .tab.active {
+            background: var(--blue-main);
+            color: #ffffff;
+            border-color: var(--blue-main);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.28);
+        }
+
+        /* Results Bento Grid */
+        #results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .bento-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                        box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                        border-color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bento-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(0, 122, 255, 0.35);
+        }
+
+        .media-preview {
+            width: 100%;
+            max-height: 220px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            object-fit: cover;
+            background: var(--input-bg);
+        }
+
+        .card-type {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .card-title {
+            font-size: 1.08rem;
+            font-weight: 700;
+            line-height: 1.35;
+            word-break: break-word;
+            margin-bottom: 8px;
+        }
+
+        .ai-badge {
+            background: rgba(14, 165, 233, 0.92);
+            backdrop-filter: blur(6px);
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 2;
+        }
+
+        .folder-badge {
+            background: rgba(14, 165, 233, 0.14);
+            color: var(--sky-badge);
+            border: 1px solid rgba(14, 165, 233, 0.28);
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-top: 4px;
+            margin-bottom: 6px;
+            margin-right: 4px;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 12px;
+            border-radius: 12px;
+            height: 40px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .action-btn, .skin-3d-btn {
+            background: var(--blue-main);
+            color: #ffffff;
+            border: none;
+            padding: 9px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background 0.2s ease, transform 0.2s ease;
+            text-decoration: none;
+        }
+
+        .action-btn:hover, .skin-3d-btn:hover {
+            background: var(--blue-hover);
+            transform: translateY(-1px);
+        }
+
+        .action-btn.green {
+            background: var(--green-btn);
+        }
+
+        .action-btn.green:hover {
+            background: var(--green-hover);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        footer {
+            margin-top: 56px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Floating Popups Styling */
+        .floating-popup {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            padding: 20px 22px;
+            border-radius: 22px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.22);
+            max-width: 370px;
+            width: calc(100vw - 40px);
+            z-index: 1000;
+            border: 1px solid var(--card-border);
+            border-left: 4px solid var(--blue-main);
+            animation: slideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .floating-popup.readme-popup {
+            border-left-color: var(--sky-badge);
+            max-height: 420px;
+            overflow-y: auto;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .popup-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .popup-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .popup-close:hover {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        .popup-body {
+            font-size: 0.88rem;
+            line-height: 1.55;
+            white-space: pre-wrap;
+        }
+
+        /* 3D Skin & Model Viewer / Text Viewer Modal Popup */
+        #skin-modal-overlay, #text-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .skin-modal-container {
+            position: relative;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            width: 100%;
+            max-width: 900px;
+            height: 82vh;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-modal-container {
+            position: relative;
+            background: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+            width: 100%;
+            max-width: 820px;
+            max-height: 82vh;
+            border-radius: 28px;
+            padding: 28px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--card-border);
+            padding-right: 44px;
+        }
+
+        .text-modal-content {
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-main);
+        }
+
+        .skin-modal-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: #ef4444;
+            color: #ffffff;
+            border: none;
+            font-size: 1rem;
+            font-weight: 700;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 2010;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .skin-modal-close:hover {
+            transform: scale(1.08);
+            background: #dc2626;
+        }
+
+        .skin-modal-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        @media (max-width: 680px) {
+            header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .nav-controls {
+                justify-content: center;
+            }
+            .search-section {
+                padding: 24px 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="license-popup" class="floating-popup">
+    <div class="popup-header">
+        <span id="license-popup-title" class="popup-title">CC0 1.0 Public Domain</span>
+        <button class="popup-close" onclick="closePopup()" aria-label="Close">✕</button>
+    </div>
+    <p id="license-popup-text" style="font-size: 0.88rem; line-height: 1.5; margin-bottom: 10px;">All assets and texts in this collection are released under the CC0 1.0 Universal Public Domain Dedication.</p>
+    <a id="license-popup-link" href="https://github.com/Stormwindsky/Stormwindsky-NEW-WEBSITE" target="_blank" rel="noopener noreferrer" style="color:var(--blue-main); font-weight:700; font-size:0.85rem; text-decoration:none;">View GitHub Repository →</a>
+</div>
+
+<div id="ai-readme-popup" class="floating-popup readme-popup">
+    <div class="popup-header">
+        <span class="popup-title">AI Creations Info</span>
+        <button class="popup-close" onclick="closeAiPopup()" aria-label="Close">✕</button>
+    </div>
+    <div id="ai-readme-content" class="popup-body">Loading...</div>
+</div>
+
+<div id="pd-readme-popup" class="floating-popup readme-popup">
+    <div class="popup-header">
+        <span class="popup-title">Edited Works Info</span>
+        <button class="popup-close" onclick="closePdPopup()" aria-label="Close">✕</button>
+    </div>
+    <div id="pd-readme-content" class="popup-body">Loading...</div>
+</div>
+
+<div id="never-readme-popup" class="floating-popup readme-popup">
+    <div class="popup-header">
+        <span class="popup-title">Third-Party Works Info</span>
+        <button class="popup-close" onclick="closeNeverPopup()" aria-label="Close">✕</button>
+    </div>
+    <div id="never-readme-content" class="popup-body">Loading...</div>
+</div>
+
+<div id="custommap-readme-popup" class="floating-popup readme-popup">
+    <div class="popup-header">
+        <span class="popup-title">Custom Map Readme</span>
+        <button class="popup-close" onclick="closeCustomMapReadme()" aria-label="Close">✕</button>
+    </div>
+    <div id="custommap-readme-content" class="popup-body">Loading...</div>
+</div>
+
+<!-- 3D Skin & Model Viewer Modal Popup -->
+<div id="skin-modal-overlay" onclick="if(event.target.id === 'skin-modal-overlay') closeSkinModal()">
+    <div class="skin-modal-container">
+        <button class="skin-modal-close" onclick="closeSkinModal()" aria-label="Close">✕</button>
+        <iframe id="skinModalIframe" class="skin-modal-iframe" src=""></iframe>
+    </div>
+</div>
+
+<!-- Text Reader Modal Popup -->
+<div id="text-modal-overlay" onclick="if(event.target.id === 'text-modal-overlay') closeTextModal()">
+    <div class="text-modal-container">
+        <button class="skin-modal-close" onclick="closeTextModal()" aria-label="Close">✕</button>
+        <div class="text-modal-header">
+            <h3 id="textModalTitle" style="font-size:1.1rem; font-weight:700;">Document Preview</h3>
+        </div>
+        <div id="textModalContent" class="text-modal-content">Loading...</div>
+    </div>
+</div>
+
+<div class="container">
+    <header>
+        <div class="brand">
+            <div class="brand-icon"><i class="fas fa-compass"></i></div>
+            <h1 id="txt-site-title">StormExplorer</h1>
+        </div>
+        <div class="nav-controls">
+            <button id="aiToggleBtn" class="filter-btn inactive" onclick="toggleAI()">🤖 AI Creations</button>
+            <button id="pdToggleBtn" class="filter-btn inactive" onclick="togglePD()">✏️ Edited by Me</button>
+            <button id="neverToggleBtn" class="filter-btn inactive" onclick="toggleNever()">📦 Third-Party Works</button>
+            <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+        </div>
+    </header>
+
+    <section class="search-section">
+        <p class="search-subtitle">Browse open-licensed HTML pages, CC0 1.0 texts, assets, 3D models, and custom maps</p>
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search assets, texts, or folders...">
+        </div>
+    </section>
+
+    <nav class="tabs" aria-label="Asset Categories">
+        <div class="tab active" data-mode="files" id="tab-files"><i class="fas fa-file-code"></i> HTML Files</div>
+        <div class="tab" data-mode="texts" id="tab-texts"><i class="fas fa-file-alt"></i> Texts (CC0)</div>
+        <div class="tab" data-mode="images" id="tab-images"><i class="fas fa-image"></i> Images</div>
+        <div class="tab" data-mode="audios" id="tab-audios"><i class="fas fa-music"></i> Audios</div>
+        <div class="tab" data-mode="videos" id="tab-videos"><i class="fas fa-video"></i> Videos</div>
+        <div class="tab" data-mode="3dmodels" id="tab-3dmodels"><i class="fas fa-cube"></i> 3D Models</div>
+        <div class="tab" data-mode="custommaps" id="tab-custommaps"><i class="fas fa-map"></i> Custom Maps</div>
+    </nav>
+
+    <main id="results-grid"></main>
+
+    <footer>
+        <p id="txt-footer">Powered by Stormwindsky-NEW-WEBSITE GitHub Repository</p>
+    </footer>
+</div>
+
+<script>
+    let currentMode = 'files';
+    let showAI = false;
+    let showPD = false;
+    let showNever = false;
+    let customMapsData = [];
+    let cachedTree = null;
+
+    const REPO_API = "https://api.github.com/repos/Stormwindsky/Stormwindsky-NEW-WEBSITE/git/trees/main?recursive=1";
+    const RAW_BASE = "https://raw.githubusercontent.com/Stormwindsky/Stormwindsky-NEW-WEBSITE/main/";
+    const GITHUB_RAW_REF = "https://github.com/Stormwindsky/Stormwindsky-NEW-WEBSITE/raw/refs/heads/main/";
+
+    const HTML_ROOT = "PublicDomain/HTML/";
+    const ASSETS_ROOT = "PublicDomain/ASSETS/";
+    const TEXT_ROOT = "PublicDomain/TEXT/";
+
+    function updateURL() {
+        const query = document.getElementById('searchInput').value;
+        const url = new URL(window.location);
+        url.searchParams.set('mode', currentMode);
+        if (query) url.searchParams.set('q', query);
+        else url.searchParams.delete('q');
+        window.history.replaceState({}, '', url);
+    }
+
+    function updateLicensePopup() {
+        const popup = document.getElementById('license-popup');
+        const titleEl = document.getElementById('license-popup-title');
+        const textEl = document.getElementById('license-popup-text');
+
+        if (currentMode === 'files') {
+            titleEl.innerText = 'MIT-0 License';
+            textEl.innerText = 'All HTML files in this category are released under the MIT-0 (MIT No Attribution) License.';
+        } else if (currentMode === 'custommaps') {
+            titleEl.innerText = 'CC0 1.0 Public Domain';
+            textEl.innerText = 'All Custom Maps in this category are released under the CC0 1.0 Universal Public Domain Dedication.';
+        } else {
+            titleEl.innerText = 'CC0 1.0 Public Domain';
+            textEl.innerText = 'All assets and texts in this category are released under the CC0 1.0 Universal Public Domain Dedication.';
+        }
+        popup.style.display = 'block';
+    }
+
+    function closePopup() { document.getElementById('license-popup').style.display = 'none'; }
+    function closeAiPopup() { document.getElementById('ai-readme-popup').style.display = 'none'; }
+    function closePdPopup() { document.getElementById('pd-readme-popup').style.display = 'none'; }
+    function closeNeverPopup() { document.getElementById('never-readme-popup').style.display = 'none'; }
+    function closeCustomMapReadme() { document.getElementById('custommap-readme-popup').style.display = 'none'; }
+
+    function openSkinModal(skinUrl) {
+        const modal = document.getElementById('skin-modal-overlay');
+        const iframe = document.getElementById('skinModalIframe');
+        const encodedSkinUrl = encodeURIComponent(skinUrl);
+        iframe.src = `https://www.stormwindsky.com/Public_Domain_Scripts_things/Made%20by%20me/Neutral/3D%20Skin%20Viewer.html?skin=${encodedSkinUrl}`;
+        modal.style.display = 'flex';
+    }
+
+    function openNbtModal(nbtUrl) {
+        const modal = document.getElementById('skin-modal-overlay');
+        const iframe = document.getElementById('skinModalIframe');
+        const encodedNbtUrl = encodeURIComponent(nbtUrl);
+        iframe.src = `https://www.stormwindsky.com/Public_Domain_Scripts_things/Made%20by%20me/Neutral/NBT%20Viewer%20Online.html?url=${encodedNbtUrl}`;
+        modal.style.display = 'flex';
+    }
+
+    function closeSkinModal() {
+        const modal = document.getElementById('skin-modal-overlay');
+        const iframe = document.getElementById('skinModalIframe');
+        iframe.src = "";
+        modal.style.display = 'none';
+    }
+
+    async function openTextModal(title, rawUrl) {
+        const modal = document.getElementById('text-modal-overlay');
+        const titleEl = document.getElementById('textModalTitle');
+        const contentEl = document.getElementById('textModalContent');
+        titleEl.innerText = title;
+        contentEl.innerText = 'Loading text content...';
+        modal.style.display = 'flex';
+        try {
+            const res = await fetch(rawUrl);
+            const text = await res.text();
+            contentEl.innerText = text;
+        } catch (e) {
+            contentEl.innerText = 'Error loading text file.';
+        }
+    }
+
+    function closeTextModal() {
+        document.getElementById('text-modal-overlay').style.display = 'none';
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeSkinModal();
+            closeTextModal();
+        }
+    });
+
+    async function openCustomMapReadme(idx) {
+        const map = customMapsData[idx];
+        if (!map) return;
+        const popup = document.getElementById('custommap-readme-popup');
+        const contentDiv = document.getElementById('custommap-readme-content');
+        popup.style.display = 'block';
+        contentDiv.innerText = 'Loading...';
+        try {
+            const res = await fetch(RAW_BASE + encodeURI(map.readme));
+            const text = await res.text();
+            contentDiv.innerText = text;
+        } catch (e) {
+            contentDiv.innerText = "Error loading Readme.";
+        }
+    }
+
+    async function downloadCustomMap(idx, btn) {
+        const map = customMapsData[idx];
+        if (!map) return;
+        const folderName = map.folder.split('/').pop();
+        const originalHtml = btn.innerHTML;
+        try {
+            btn.disabled = true;
+            const zip = new JSZip();
+            const root = zip.folder(folderName);
+            for (let i = 0; i < map.files.length; i++) {
+                const f = map.files[i];
+                btn.innerText = `Zipping ${i + 1}/${map.files.length}...`;
+                const rel = f.path.substring(map.folder.length + 1);
+                try {
+                    const res = await fetch(RAW_BASE + encodeURI(f.path));
+                    if (!res.ok) continue;
+                    const blob = await res.blob();
+                    root.file(rel, blob);
+                } catch (innerErr) { /* skip file on error */ }
+            }
+            btn.innerText = 'Generating zip...';
+            const content = await zip.generateAsync({ type: 'blob' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(content);
+            a.download = folderName + '.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+            btn.innerHTML = originalHtml;
+        } catch (e) {
+            alert('Error creating zip: ' + e.message);
+            btn.innerHTML = originalHtml;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function fetchReadmeFromTree(keywords, fallbackUrl, targetDivId) {
+        const contentDiv = document.getElementById(targetDivId);
+        contentDiv.innerText = "Loading...";
+        try {
+            const tree = await getRepoTree();
+            const match = tree.find(i =>
+                i.type === 'blob' &&
+                i.path.startsWith('PublicDomain/') &&
+                i.path.toLowerCase().endsWith('.md') &&
+                keywords.some(kw => i.path.toLowerCase().includes(kw))
+            );
+            const url = match ? (RAW_BASE + encodeURI(match.path)) : fallbackUrl;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("Not found");
+            contentDiv.innerText = await res.text();
+        } catch (e) {
+            contentDiv.innerText = "No specific README found for this filter.";
+        }
+    }
+
+    function toggleAI() {
+        showAI = !showAI;
+        const btn = document.getElementById('aiToggleBtn');
+        const popup = document.getElementById('ai-readme-popup');
+        if (showAI) {
+            btn.classList.replace('inactive', 'active');
+            popup.style.display = 'block';
+            fetchReadmeFromTree(['ai creations', 'ai_creations', 'ai/readme'], RAW_BASE + "PublicDomain/ASSETS/AI%20Creations/README.md", 'ai-readme-content');
+        } else {
+            btn.classList.replace('active', 'inactive');
+            popup.style.display = 'none';
+        }
+        fetchData(document.getElementById('searchInput').value);
+    }
+
+    function togglePD() {
+        showPD = !showPD;
+        const btn = document.getElementById('pdToggleBtn');
+        const popup = document.getElementById('pd-readme-popup');
+        if (showPD) {
+            btn.classList.replace('inactive', 'active');
+            popup.style.display = 'block';
+            fetchReadmeFromTree(['not_made_by_me', 'not made by me', 'edited'], RAW_BASE + "PublicDomain/ASSETS/Popup.md", 'pd-readme-content');
+        } else {
+            btn.classList.replace('active', 'inactive');
+            popup.style.display = 'none';
+        }
+        fetchData(document.getElementById('searchInput').value);
+    }
+
+    function toggleNever() {
+        showNever = !showNever;
+        const btn = document.getElementById('neverToggleBtn');
+        const popup = document.getElementById('never-readme-popup');
+        if (showNever) {
+            btn.classList.replace('inactive', 'active');
+            popup.style.display = 'block';
+            fetchReadmeFromTree(['never_made', 'never made'], RAW_BASE + "PublicDomain/ASSETS/Popup.md", 'never-readme-content');
+        } else {
+            btn.classList.replace('active', 'inactive');
+            popup.style.display = 'none';
+        }
+        fetchData(document.getElementById('searchInput').value);
+    }
+
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        updateThemeButtonText();
+    }
+
+    function updateThemeButtonText() {
+        const theme = localStorage.getItem('theme') || 'light';
+        const btn = document.getElementById('themeBtn');
+        btn.innerText = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+    }
+
+    async function getRepoTree() {
+        if (cachedTree) return cachedTree;
+        const res = await fetch(REPO_API);
+        if (!res.ok) throw new Error("GitHub API Error");
+        const data = await res.json();
+        cachedTree = data.tree || [];
+        return cachedTree;
+    }
+
+    function applyCategoryFilters(items) {
+        let filtered = items;
+        if (!showAI) {
+            filtered = filtered.filter(i => !/ai[\s_-]?creations/i.test(i.path));
+        }
+        if (!showPD) {
+            filtered = filtered.filter(i => !/not[\s_-]?made[\s_-]?by[\s_-]?me|edited|based[\s_-]?i[\s_-]?made/i.test(i.path));
+        }
+        if (!showNever) {
+            filtered = filtered.filter(i => !/never[\s_-]?made/i.test(i.path));
+        }
+        return filtered;
+    }
+
+    async function fetchData(query = '') {
+        const grid = document.getElementById('results-grid');
+        grid.innerHTML = `<div class="status-message"><i class="fas fa-spinner fa-spin"></i> Loading collection...</div>`;
+        
+        const aiBtn = document.getElementById('aiToggleBtn');
+        const pdBtn = document.getElementById('pdToggleBtn');
+        const neverBtn = document.getElementById('neverToggleBtn');
+
+        updateLicensePopup();
+
+        if (currentMode === 'files' || currentMode === 'custommaps') {
+            aiBtn.style.display = 'none';
+            pdBtn.style.display = 'none';
+            neverBtn.style.display = 'none';
+        } else {
+            aiBtn.style.display = 'inline-flex';
+            pdBtn.style.display = 'inline-flex';
+            neverBtn.style.display = 'inline-flex';
+        }
+
+        try {
+            const tree = await getRepoTree();
+            let items = [];
+
+            if (currentMode === 'files') {
+                items = tree.filter(i =>
+                    i.type === 'blob' &&
+                    i.path.startsWith(HTML_ROOT) &&
+                    i.path.toLowerCase().endsWith('.html')
+                ).map(i => ({ ...i, sourceRoot: HTML_ROOT }));
+
+            } else if (currentMode === 'texts') {
+                items = tree.filter(i =>
+                    i.type === 'blob' &&
+                    i.path.startsWith(TEXT_ROOT) &&
+                    i.path.match(/\.(txt|md|markdown|csv|json|xml|log|rtf)$/i) &&
+                    !i.path.toLowerCase().endsWith('readme.md')
+                ).map(i => ({ ...i, sourceRoot: TEXT_ROOT }));
+
+                items = applyCategoryFilters(items);
+
+            } else if (currentMode === 'custommaps') {
+                const assetFiles = tree.filter(i => i.type === 'blob' && i.path.startsWith(ASSETS_ROOT));
+                const readmes = assetFiles.filter(f =>
+                    f.path.toLowerCase().includes('custom maps/') &&
+                    f.path.toLowerCase().endsWith('/readme.md')
+                );
+
+                let maps = readmes.map(r => {
+                    const folder = r.path.substring(0, r.path.lastIndexOf('/'));
+                    const files = assetFiles.filter(f => f.path.startsWith(folder + '/'));
+                    return { folder: folder, readme: r.path, files: files };
+                });
+
+                if (query) {
+                    const q = query.toLowerCase();
+                    maps = maps.filter(m => m.folder.toLowerCase().includes(q));
+                }
+
+                customMapsData = maps;
+                renderCustomMaps(maps);
+                updateURL();
+                return;
+
+            } else {
+                // Media & 3D Models inside PublicDomain/ASSETS
+                items = tree.filter(i =>
+                    i.type === 'blob' &&
+                    i.path.startsWith(ASSETS_ROOT)
+                ).map(i => ({ ...i, sourceRoot: ASSETS_ROOT }));
+
+                if (currentMode === 'images') {
+                    items = items.filter(i => i.path.match(/\.(jpg|jpeg|png|gif|svg|webp)$/i));
+                } else if (currentMode === 'audios') {
+                    items = items.filter(i => i.path.match(/\.(mp3|wav|ogg|flac|m4a)$/i));
+                } else if (currentMode === 'videos') {
+                    items = items.filter(i => i.path.match(/\.(mp4|webm|mov|mkv)$/i));
+                } else if (currentMode === '3dmodels') {
+                    items = items.filter(i => i.path.match(/\.(nbt|obj|gltf|glb|stl|fbx)$/i));
+                }
+
+                items = applyCategoryFilters(items);
+            }
+
+            if (query) {
+                const q = query.toLowerCase();
+                items = items.filter(i => i.path.toLowerCase().includes(q));
+            }
+
+            renderGrid(items);
+            updateURL();
+        } catch (e) {
+            grid.innerHTML = `<div class="status-message">Error loading data from GitHub API. Please try again later.</div>`;
+        }
+    }
+
+    function renderCustomMaps(maps) {
+        const grid = document.getElementById('results-grid');
+        grid.innerHTML = '';
+
+        if (maps.length === 0) {
+            grid.innerHTML = '<div class="status-message">No custom maps found in PublicDomain/ASSETS.</div>';
+            return;
+        }
+
+        maps.forEach((map, idx) => {
+            const card = document.createElement('div');
+            card.className = 'bento-card';
+            const folderName = map.folder.split('/').pop();
+
+            let badgeHtml = '';
+            const rel = map.folder.substring(ASSETS_ROOT.length);
+            const parts = rel.split('/');
+            if (parts.length > 1) {
+                badgeHtml = `<div class="folder-badge">${parts[0]}</div>`;
+            }
+
+            card.innerHTML = `
+                <div>
+                    <span class="card-type">Custom Map</span>
+                    <h3 class="card-title">${folderName}</h3>
+                    ${badgeHtml}
+                    <p style="color:var(--text-muted); font-size:0.85rem; margin-top:8px;">${map.files.length} file(s)</p>
+                </div>
+                <div class="card-actions">
+                    <button class="action-btn" onclick="openCustomMapReadme(${idx})"><i class="fas fa-book-open"></i> Readme</button>
+                    <button class="action-btn green" id="dl-btn-${idx}" onclick="downloadCustomMap(${idx}, this)"><i class="fas fa-download"></i> Download ZIP</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function getFolderBadges(itemPath, rootPrefix) {
+        if (!itemPath.startsWith(rootPrefix)) return '';
+        const relativePath = itemPath.substring(rootPrefix.length);
+        const parts = relativePath.split('/');
+        parts.pop();
+        if (parts.length === 0) return '';
+        return parts.map(folder => `<span class="folder-badge">${folder}</span>`).join('');
+    }
+
+    function renderGrid(items) {
+        const grid = document.getElementById('results-grid');
+        grid.innerHTML = '';
+
+        if (items.length === 0) {
+            grid.innerHTML = '<div class="status-message">No matching items found.</div>';
+            return;
+        }
+        
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'bento-card';
+            const isAI = /ai[\s_-]?creations/i.test(item.path);
+            const fileName = item.path.split('/').pop();
+            
+            let url = "";
+            let nbtRawUrl = GITHUB_RAW_REF + encodeURI(item.path);
+
+            if (currentMode === 'files') {
+                url = `https://www.stormwindsky.com/${encodeURI(item.path)}`;
+            } else {
+                url = RAW_BASE + encodeURI(item.path);
+            }
+            
+            const typeLabel = currentMode === 'files' ? 'HTML Page (MIT-0)' : (currentMode === 'texts' ? 'CC0 Text' : currentMode);
+            let content = `<div><span class="card-type">${typeLabel}</span><h3 class="card-title">${fileName}</h3>`;
+            
+            content += getFolderBadges(item.path, item.sourceRoot);
+
+            if (isAI) {
+                content += `<div class="ai-badge">🤖 AI</div>`;
+            }
+
+            const isPng = item.path.toLowerCase().endsWith('.png');
+            const isSkinFolder = item.path.toLowerCase().includes('skin');
+            const isValidSkinAsset = currentMode === 'images' && isPng && isSkinFolder;
+
+            let skinBtnContainerId = `skin-btn-container-${Math.random().toString(36).substr(2, 9)}`;
+            let skinBtnHtml = isValidSkinAsset ? `<div id="${skinBtnContainerId}" style="margin-top:8px;"></div>` : "";
+
+            if (currentMode === 'images') {
+                content = `<img src="${url}" loading="lazy" class="media-preview" alt="${fileName}">` + content + skinBtnHtml;
+            }
+            if (currentMode === 'audios') {
+                content += `<audio controls><source src="${url}"></audio>`;
+            }
+            if (currentMode === 'videos') {
+                content = `<video controls class="media-preview"><source src="${url}"></video>` + content;
+            }
+
+            const isNbt = item.path.toLowerCase().endsWith('.nbt');
+            let nbtBtnHtml = isNbt ? `<button class="action-btn" onclick="openNbtModal('${nbtRawUrl}')"><i class="fas fa-cube"></i> 3D NBT Viewer</button>` : '';
+            let downloadBtnHtml = (currentMode === '3dmodels' || currentMode === 'texts') ? `<a href="${url}" download="${fileName}" class="action-btn green"><i class="fas fa-download"></i> Download</a>` : '';
+            let readTextBtnHtml = currentMode === 'texts' ? `<button class="action-btn" onclick="openTextModal('${fileName.replace(/'/g, "\\'")}', '${url}')"><i class="fas fa-eye"></i> Read</button>` : '';
+            let openLabel = currentMode === 'files' ? 'Open Page' : (currentMode === 'texts' ? 'Raw File' : 'Open Asset');
+
+            content += `</div>
+            <div class="card-actions">
+                ${readTextBtnHtml}
+                <a href="${url}" target="_blank" rel="noopener noreferrer" class="action-btn"><i class="fas fa-external-link-alt"></i> ${openLabel}</a>
+                ${downloadBtnHtml}
+                ${nbtBtnHtml}
+            </div>`;
+
+            card.innerHTML = content;
+            grid.appendChild(card);
+
+            if (isValidSkinAsset) {
+                const img = new Image();
+                img.onload = function() {
+                    const is64x64 = img.naturalWidth === 64 && img.naturalHeight === 64;
+                    const is64x32 = img.naturalWidth === 64 && img.naturalHeight === 32;
+                    
+                    if (is64x64 || is64x32) {
+                        const container = document.getElementById(skinBtnContainerId);
+                        if (container) {
+                            container.innerHTML = `<button class="skin-3d-btn" onclick="openSkinModal('${url}')"><i class="fas fa-user"></i> View 3D Skin</button>`;
+                        }
+                    }
+                };
+                img.src = url;
+            }
+        });
+    }
+
+    // --- EVENTS ---
+    document.getElementById('searchInput').addEventListener('input', (e) => fetchData(e.target.value));
+
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentMode = tab.dataset.mode;
+            fetchData(document.getElementById('searchInput').value);
+        });
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const modeParam = urlParams.get('mode');
+        const queryParam = urlParams.get('q');
+        
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeButtonText();
+
+        if (modeParam) {
+            currentMode = modeParam;
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+                if (t.dataset.mode === modeParam) t.classList.add('active');
+            });
+        }
+        if (queryParam) {
+            document.getElementById('searchInput').value = queryParam;
+        }
+
+        fetchData(document.getElementById('searchInput').value);
+    });
+</script>
+
+</body>
+</html>
