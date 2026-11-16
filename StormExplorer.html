@@ -686,7 +686,7 @@
     const GITHUB_RAW_REF = "https://github.com/Stormwindsky/Stormwindsky-NEW-WEBSITE/raw/refs/heads/main/";
 
     const HTML_ROOT = "PublicDomain/HTML/";
-    const ASSETS_ROOT = "PublicDomain/ASSETS/";
+    const ASSETS_ROOT = "PublicDomain/ASSETS/2026/Map/Minecraft/";
     const TEXT_ROOT = "PublicDomain/TEXT/";
 
     function updateURL() {
@@ -993,7 +993,7 @@
                 return;
 
             } else {
-                // Media & 3D Models inside PublicDomain/ASSETS
+                // Media & 3D Models inside PublicDomain/ASSETS/2026/Map/Minecraft/
                 items = tree.filter(i =>
                     i.type === 'blob' &&
                     i.path.startsWith(ASSETS_ROOT)
@@ -1029,7 +1029,7 @@
         grid.innerHTML = '';
 
         if (maps.length === 0) {
-            grid.innerHTML = '<div class="status-message">No custom maps found in PublicDomain/ASSETS.</div>';
+            grid.innerHTML = '<div class="status-message">No custom maps found in PublicDomain/ASSETS/2026/Map/Minecraft/.</div>';
             return;
         }
 
