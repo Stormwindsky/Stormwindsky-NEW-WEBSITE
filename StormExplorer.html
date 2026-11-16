@@ -686,7 +686,8 @@
     const GITHUB_RAW_REF = "https://github.com/Stormwindsky/Stormwindsky-NEW-WEBSITE/raw/refs/heads/main/";
 
     const HTML_ROOT = "PublicDomain/HTML/";
-    const ASSETS_ROOT = "PublicDomain/ASSETS/2026/Map/Minecraft/";
+    const ASSETS_ROOT = "PublicDomain/ASSETS/";
+    const MINECRAFT_MAPS_ROOT = "PublicDomain/ASSETS/2026/Map/Minecraft/";
     const TEXT_ROOT = "PublicDomain/TEXT/";
 
     function updateURL() {
@@ -853,7 +854,7 @@
         if (showAI) {
             btn.classList.replace('inactive', 'active');
             popup.style.display = 'block';
-            fetchReadmeFromTree(['ai creations', 'ai_creations', 'ai/readme'], RAW_BASE + "PublicDomain/ASSETS/AI%20Creations/README.md", 'ai-readme-content');
+            fetchReadmeFromTree(['ai creations', 'ai_creations', 'ai/readme'], RAW_BASE + "PublicDomain/ASSETS/AI/README.md", 'ai-readme-content');
         } else {
             btn.classList.replace('active', 'inactive');
             popup.style.display = 'none';
@@ -917,13 +918,13 @@
     function applyCategoryFilters(items) {
         let filtered = items;
         if (!showAI) {
-            filtered = filtered.filter(i => !/ai[\s_-]?creations/i.test(i.path));
+            filtered = filtered.filter(i => !/(^|\/)ASSETS\/AI(\/|$)/i.test(i.path));
         }
         if (!showPD) {
-            filtered = filtered.filter(i => !/not[\s_-]?made[\s_-]?by[\s_-]?me|edited|based[\s_-]?i[\s_-]?made/i.test(i.path));
+            filtered = filtered.filter(i => !/(^|\/)ASSETS\/Not made by Stormwindsky(\/|$)/i.test(i.path));
         }
         if (!showNever) {
-            filtered = filtered.filter(i => !/never[\s_-]?made/i.test(i.path));
+            filtered = filtered.filter(i => !/(^|\/)ASSETS\/Really not made by Stormwindsky(\/|$)/i.test(i.path));
         }
         return filtered;
     }
@@ -938,7 +939,7 @@
 
         updateLicensePopup();
 
-        if (currentMode === 'files' || currentMode === 'custommaps') {
+        if (currentMode === 'files' || currentMode === 'texts') {
             aiBtn.style.display = 'none';
             pdBtn.style.display = 'none';
             neverBtn.style.display = 'none';
@@ -967,20 +968,32 @@
                     !i.path.toLowerCase().endsWith('readme.md')
                 ).map(i => ({ ...i, sourceRoot: TEXT_ROOT }));
 
-                items = applyCategoryFilters(items);
-
             } else if (currentMode === 'custommaps') {
-                const assetFiles = tree.filter(i => i.type === 'blob' && i.path.startsWith(ASSETS_ROOT));
-                const readmes = assetFiles.filter(f =>
-                    f.path.toLowerCase().includes('custom maps/') &&
-                    f.path.toLowerCase().endsWith('/readme.md')
-                );
-
-                let maps = readmes.map(r => {
-                    const folder = r.path.substring(0, r.path.lastIndexOf('/'));
-                    const files = assetFiles.filter(f => f.path.startsWith(folder + '/'));
-                    return { folder: folder, readme: r.path, files: files };
+                const mapFiles = tree.filter(i => i.type === 'blob' && i.path.startsWith(MINECRAFT_MAPS_ROOT));
+                
+                // Identify distinct map folders inside MINECRAFT_MAPS_ROOT
+                const folderMap = {};
+                mapFiles.forEach(f => {
+                    const relativePath = f.path.substring(MINECRAFT_MAPS_ROOT.length);
+                    const parts = relativePath.split('/');
+                    if (parts.length > 1) {
+                        const mapFolderName = parts[0];
+                        const fullFolderPath = MINECRAFT_MAPS_ROOT + mapFolderName;
+                        if (!folderMap[fullFolderPath]) {
+                            folderMap[fullFolderPath] = {
+                                folder: fullFolderPath,
+                                readme: null,
+                                files: []
+                            };
+                        }
+                        folderMap[fullFolderPath].files.push(f);
+                        if (f.path.toLowerCase().endsWith('/readme.md') || f.path.toLowerCase() === fullFolderPath.toLowerCase() + '/readme.md') {
+                            folderMap[fullFolderPath].readme = f.path;
+                        }
+                    }
                 });
+
+                let maps = Object.values(folderMap);
 
                 if (query) {
                     const q = query.toLowerCase();
@@ -993,7 +1006,7 @@
                 return;
 
             } else {
-                // Media & 3D Models inside PublicDomain/ASSETS/2026/Map/Minecraft/
+                // Media & 3D Models inside PublicDomain/ASSETS/
                 items = tree.filter(i =>
                     i.type === 'blob' &&
                     i.path.startsWith(ASSETS_ROOT)
@@ -1038,22 +1051,17 @@
             card.className = 'bento-card';
             const folderName = map.folder.split('/').pop();
 
-            let badgeHtml = '';
-            const rel = map.folder.substring(ASSETS_ROOT.length);
-            const parts = rel.split('/');
-            if (parts.length > 1) {
-                badgeHtml = `<div class="folder-badge">${parts[0]}</div>`;
-            }
+            let readmeBtnHtml = map.readme ? `<button class="action-btn" onclick="openCustomMapReadme(${idx})"><i class="fas fa-book-open"></i> Readme</button>` : '';
 
             card.innerHTML = `
                 <div>
                     <span class="card-type">Custom Map</span>
                     <h3 class="card-title">${folderName}</h3>
-                    ${badgeHtml}
+                    <div class="folder-badge">Minecraft Map</div>
                     <p style="color:var(--text-muted); font-size:0.85rem; margin-top:8px;">${map.files.length} file(s)</p>
                 </div>
                 <div class="card-actions">
-                    <button class="action-btn" onclick="openCustomMapReadme(${idx})"><i class="fas fa-book-open"></i> Readme</button>
+                    ${readmeBtnHtml}
                     <button class="action-btn green" id="dl-btn-${idx}" onclick="downloadCustomMap(${idx}, this)"><i class="fas fa-download"></i> Download ZIP</button>
                 </div>
             `;
@@ -1082,7 +1090,7 @@
         items.forEach(item => {
             const card = document.createElement('div');
             card.className = 'bento-card';
-            const isAI = /ai[\s_-]?creations/i.test(item.path);
+            const isAI = /(^|\/)ASSETS\/AI(\/|$)/i.test(item.path);
             const fileName = item.path.split('/').pop();
             
             let url = "";
