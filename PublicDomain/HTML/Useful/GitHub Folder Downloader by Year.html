@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Folder Downloader by Year</title>
+    <!-- Tailwind CSS for clean styling -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- JSZip for archive creation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
+    <div class="max-w-3xl mx-auto bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-700">
+        <h1 class="text-2xl font-bold mb-2 text-indigo-400">📦 GitHub Folder Downloader by Year</h1>
+        <p class="text-sm text-slate-400 mb-6">
+            Enter any public GitHub folder URL and target year. The script scans the files, checks their last commit date, filters matching files, and bundles them into a ZIP archive.
+        </p>
+
+        <div class="space-y-4 mb-6">
+            <div>
+                <label class="block text-sm font-medium mb-1">GitHub Folder URL:</label>
+                <input type="text" id="repoUrl" placeholder="https://github.com/username/repository/tree/branch/path/to/folder" 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Target Year:</label>
+                    <input type="number" id="targetYear" placeholder="e.g., 2025" 
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">GitHub Personal Access Token (Optional*) :</label>
+                    <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" 
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                    <p class="text-xs text-slate-500 mt-1">*Recommended to bypass the API rate limit (60 requests/hour).</p>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="startDownload()" id="actionBtn"
+            class="w-full bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 px-6 rounded-lg transition duration-200 cursor-pointer shadow-lg">
+            Scan and Download ZIP
+        </button>
+
+        <!-- Progress bar -->
+        <div id="progressContainer" class="hidden mt-6 space-y-2">
+            <div class="flex justify-between text-sm">
+                <span id="progressStatus">Preparing...</span>
+                <span id="progressCount">0 / 0</span>
+            </div>
+            <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-700">
+                <div id="progressBar" class="bg-indigo-500 h-2.5 transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Execution logs -->
+        <div class="mt-6">
+            <label class="block text-sm font-medium mb-1 text-slate-400">Execution Log:</label>
+            <div id="logs" class="w-full h-48 bg-slate-950 border border-slate-800 rounded-lg p-4 text-xs font-mono overflow-y-auto text-slate-300 space-y-1">
+                <span class="text-slate-500">Waiting to start...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const colors = {
+                info: 'text-slate-300',
+                success: 'text-emerald-400',
+                warn: 'text-amber-400',
+                error: 'text-rose-400'
+            };
+            logsDiv.innerHTML += `<div class="${colors[type]}">[${new Date().toLocaleTimeString()}] ${message}</div>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function parseGitHubUrl(url) {
+            const regex = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)$/;
+            const match = url.match(regex);
+            if (!match) return null;
+            return {
+                owner: match[1],
+                repo: match[2],
+                branch: match[3],
+                path: match[4]
+            };
+        }
+
+        class GithubAPI {
+            constructor(token) {
+                this.headers = {};
+                if (token) {
+                    this.headers['Authorization'] = `token ${token}`;
+                }
+            }
+
+            async fetchContents(owner, repo, path, branch) {
+                const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+                const response = await fetch(url, { headers: this.headers });
+                if (!response.ok) {
+                    throw new Error(`GitHub API Error (${response.status}): ${response.statusText}`);
+                }
+                return await response.json();
+            }
+
+            async getFileLastCommitYear(owner, repo, filePath, branch) {
+                const url = `https://api.github.com/repos/${owner}/${repo}/commits?path=${encodeURIComponent(filePath)}&sha=${branch}&per_page=1`;
+                const response = await fetch(url, { headers: this.headers });
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error("GitHub API rate limit exceeded. Please use a Personal Access Token.");
+                    }
+                    return null;
+                }
+                const commits = await response.json();
+                if (commits && commits.length > 0) {
+                    const commitDate = commits[0].commit.committer.date;
+                    return new Date(commitDate).getFullYear();
+                }
+                return null;
+            }
+
+            async downloadFile(downloadUrl) {
+                const response = await fetch(downloadUrl);
+                if (!response.ok) throw new Error("Failed to download raw file content.");
+                return await response.blob();
+            }
+        }
+
+        async function getAllFilesRecursive(api, owner, repo, path, branch, fileList = []) {
+            const contents = await api.fetchContents(owner, repo, path, branch);
+            for (const item of contents) {
+                if (item.type === 'file') {
+                    fileList.push(item);
+                } else if (item.type === 'dir') {
+                    await getAllFilesRecursive(api, owner, repo, item.path, branch, fileList);
+                }
+            }
+            return fileList;
+        }
+
+        async function startDownload() {
+            const rawUrl = document.getElementById('repoUrl').value.trim();
+            const targetYearInput = document.getElementById('targetYear').value.trim();
+            const token = document.getElementById('githubToken').value.trim();
+            const btn = document.getElementById('actionBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressStatus = document.getElementById('progressStatus');
+            const progressCount = document.getElementById('progressCount');
+
+            document.getElementById('logs').innerHTML = '';
+
+            if (!rawUrl) {
+                log("Please enter a valid GitHub folder URL.", "error");
+                return;
+            }
+
+            if (!targetYearInput) {
+                log("Please enter a target year.", "error");
+                return;
+            }
+
+            const targetYear = parseInt(targetYearInput, 10);
+            
+            const parsed = parseGitHubUrl(rawUrl);
+            if (!parsed) {
+                log("Invalid GitHub URL format. Use a standard folder tree URL (e.g., .../tree/main/folder)", "error");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            progressContainer.classList.remove('hidden');
+
+            const api = new GithubAPI(token);
+
+            try {
+                log(`Exploring repository structure for ${parsed.owner}/${parsed.repo}...`);
+                progressStatus.textContent = "Fetching file list...";
+                
+                const allFiles = await getAllFilesRecursive(api, parsed.owner, parsed.repo, parsed.path, parsed.branch);
+                log(`Total files found in directory: ${allFiles.length}`, "info");
+
+                let matchedFiles = [];
+                let processed = 0;
+
+                for (const file of allFiles) {
+                    processed++;
+                    progressCount.textContent = `${processed} / ${allFiles.length}`;
+                    progressBar.style.width = `${(processed / allFiles.length) * 50}%`;
+
+                    progressStatus.textContent = `Checking: ${file.name}`;
+                    try {
+                        const year = await api.getFileLastCommitYear(parsed.owner, parsed.repo, file.path, parsed.branch);
+                        if (year === targetYear) {
+                            log(`[Matched - ${year}] ${file.path}`, "success");
+                            matchedFiles.push(file);
+                        } else {
+                            log(`[Ignored - ${year || 'Unknown'}] ${file.path}`, "warn");
+                        }
+                    } catch (err) {
+                        log(`Error on ${file.name}: ${err.message}`, "error");
+                        if (err.message.includes("rate limit")) break;
+                    }
+
+                    await new Promise(r => setTimeout(r, 150));
+                }
+
+                if (matchedFiles.length === 0) {
+                    log(`No files found for year ${targetYear} in this directory.`, "warn");
+                    progressStatus.textContent = "Finished (No files matched)";
+                    return;
+                }
+
+                log(`Creating ZIP archive for ${matchedFiles.length} files from ${targetYear}...`, "info");
+                progressStatus.textContent = "Downloading files and building ZIP...";
+                
+                const zip = new JSZip();
+                let downloadedCount = 0;
+
+                for (const file of matchedFiles) {
+                    try {
+                        const blob = await api.downloadFile(file.download_url);
+                        const relativePath = file.path.substring(parsed.path.length + 1);
+                        zip.file(relativePath, blob);
+                        downloadedCount++;
+                        
+                        const currentProgress = 50 + (downloadedCount / matchedFiles.length) * 50;
+                        progressBar.style.width = `${currentProgress}%`;
+                        progressCount.textContent = `${downloadedCount} / ${matchedFiles.length} (ZIP)`;
+                    } catch (e) {
+                        log(`Failed to download content: ${file.name}`, "error");
+                    }
+                }
+
+                log("Generating ZIP file...", "info");
+                const content = await zip.generateAsync({ type: "blob" });
+                
+                const blobUrl = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `${parsed.repo}-files-${targetYear}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+
+                log(`Success! ZIP file downloaded successfully.`, "success");
+                progressStatus.textContent = "Completed successfully!";
+
+            } catch (err) {
+                log(`Critical error: ${err.message}`, "error");
+                progressStatus.textContent = "Execution failed";
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    </script>
+</body>
+</html>
